@@ -5,7 +5,9 @@ import upload from './services/upload.js';
 import Contenedor from './classes/Contenedor.js';
 import { __dirname } from './utils.js';
 import { Server } from 'socket.io';
-import products from './routes/products.js';
+import productos from './routes/products.js';
+import MessagesClass from './services/Messages.js';
+
 // import carrito from './routes/carrito.js';
 
 const app = express();
@@ -15,7 +17,7 @@ const server = app.listen(PORT, () =>{
 })
 server.on('error', (error)=>console.log(`Error en el servidor ${error}`))
 
-const contenedor = new Contenedor();
+const messagesService = new MessagesClass();
 export const io = new Server(server);
 
 app.use(express.json());
@@ -30,8 +32,7 @@ app.use((req,res,next)=>{
 })
 
 // Routes
-app.use('/api/productos', products);
-// app.use('/api/carrito',carrito);
+app.use('/api/productos', productos);
 
 //Definir motor de plantilla de la clase 12
 app.engine('handlebars', engine());
@@ -48,16 +49,32 @@ app.post('/api/uploadfile',upload.array('images'),(req,res)=>{
     res.send(files);
 })
 
-// clase 12
+// socket mensajes clase 11
 
-// socket mensajes clase 12
+// GET
 
-let messages = [];
+app.get('/api/mensajes/', (req,res)=>{
+    messagesService.getHistoryMessages().then(result=>{
+        res.send(result.history);
+    })
+})
+
+//POST
+
+app.post('/api/mensajes/', (req,res)=>{
+    let msg = req.body;
+    messagesService.pushMessages(msg).then(result=>{
+        res.send(result)
+        if(result.message==="Mensaje enviado con exito"){
+            messagesService.getHistoryMessages().then(result=>{
+                io.emit('chatHistory', result)
+            })
+        }
+    })
+})
 
 io.on('connection', socket=>{
-    socket.emit('chatHistory', messages)
-    socket.on('message', data=>{
-        messages.push(data)
-        io.emit('chatHistory', messages);
+    messagesService.getHistoryMessages().then(result=>{
+        socket.emit('chatHistory',result)
     })
 });

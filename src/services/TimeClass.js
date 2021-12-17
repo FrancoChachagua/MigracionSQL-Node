@@ -1,1 +1,0 @@
-import database from "../config.js";

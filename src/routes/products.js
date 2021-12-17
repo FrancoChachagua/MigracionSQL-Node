@@ -1,11 +1,9 @@
 import express from 'express';
-import Contenedor from '../classes/Contenedor.js';
 import {io} from '../app.js';
 import { adminOrUser} from '../utils.js';
 import ProductsClass from '../services/ProductsClass.js';
 
 const router = express.Router();
-const contenedor = new Contenedor();
 const productService = new ProductsClass();
 
 router.use((req,res,next)=>{
@@ -44,20 +42,29 @@ router.get('/:id?', (req,res)=>{
     })
 })
 
-
 // POST
+
+// router.post('/' ,adminOrUser,(req,res)=>{
+//     let product = req.body;
+//     product.precio = parseInt(product.precio);
+//     console.log(req.body);
+//     productService.save(product).then(result=>{
+//         res.send(result);
+//         if(result.message==="Pedido creado con exito"){
+//             productService.getAll().then(result=>{
+//                 io.emit('realTimeCards', result)
+//             })
+//         }
+//     })
+// })
 
 router.post('/' ,adminOrUser,(req,res)=>{
     let product = req.body;
     product.precio = parseInt(product.precio);
-    console.log(req.body);
-    contenedor.save(product).then(result=>{
+    product.stock = parseInt(product.stock);
+    console.log(product);
+    productService.save(product).then(result=>{
         res.send(result);
-        if(result.message==="Pedido creado con exito"){
-            contenedor.getAll().then(result=>{
-                io.emit('realTimeCards', result)
-            })
-        }
     })
 })
 
@@ -68,7 +75,7 @@ router.put('/:id',adminOrUser,(req,res)=>{
     let body = req.body;
     let id = parseInt(req.params.id);
     console.log(body,id);
-    contenedor.updateProduct(id,body).then(result=>{
+    productService.updateProduct(id,body).then(result=>{
         res.send(result);
     })
 })
@@ -78,9 +85,13 @@ router.put('/:id',adminOrUser,(req,res)=>{
 
 router.delete('/:id', adminOrUser , (req,res)=>{
     let id= parseInt(req.params.id);
-    contenedor.deleteById(id).then(result=>{
+    console.log(id);
+    productService.deleteById(id).then(result=>{
         res.send(result)
     })
 })
+
+
+
 
 export default router;
